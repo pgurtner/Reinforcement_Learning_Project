@@ -17,9 +17,14 @@ Multiple iterations from basic to interesting:
 4. hide and seek where both hider and seeker learn and states can't just be grid-tiles
 
 # todo
- * conceptualize code
- * roadmap
- * timeplan including report (5 days including today/thursday and excluding tuesday)
+1. just implement gridworld example while keeping interfaces flexible
+2. look for good 2-agents problem
+    1. reread chapter 3 and get game inspiration
+    2. find good 2-player problem
+    3. adjust interfaces to support also this
+* roadmap
+* timeplan including report (5 days including today/thursday and excluding tuesday)
+* find better names for modules
 
 # code concept
  * Algorithm
@@ -27,12 +32,12 @@ Multiple iterations from basic to interesting:
  * example / problem
  * rest of the code is independent of the individual problem
 
-Actor:
+Agent:
     plays according to learning algorithm and afterwards according to learned policy
-    each action interacts with the environment -> or more generally with the MDP? It should support other actors
-    => actor should only see MDP interface: possible states and actions, initial state, new state and reward after taking an action
-    actor should be free to do whatever it wants and using the algorithm just means running the function that is a specific sequence of actions
-    actor needs some state to work across episodes
+    each action interacts with the environment -> or more generally with the MDP? It should support other agents
+    => agent should only see MDP interface: possible states and actions, initial state, new state and reward after taking an action
+    agent should be free to do whatever it wants and using the algorithm just means running the function that is a specific sequence of actions
+    agent needs some state to work across episodes
 
 Policy
 
@@ -48,21 +53,30 @@ per round:
     somehow track metrics like policy performance
     get learned policy for evaluations
 
-2-actor example like hide and seek:
+2-agent example like hide and seek:
 per round:
     both interact in rounds after one another with MDP and further learn their policy
-    problem: the optimal policy is unknown, but you have a clear win or lose for each actor
-    todo: how to model hide and seek as an MDP
+    problem: the optimal policy is unknown, but you have a clear win or lose for each agent
+    see section hide and seek as an MDP
+
+## hide and seek as an MDP
+Two moving players. One hider, one seeker.
+Seeker wins if it touches hider while pointing in its direction.
+Hider wins after some amount of time.
+would this even lead to an interesting game in a plain grid world?
+no it would all be about luck. You can't the quality of a hideout in a simple grid world.
+This tag running thing would be the closest usable thing, but you'd have to model velocity and maybe inertia.
+-> stick to some simple round based game
 
 ## More detail
-### Actor
+### Agent
 depends on Policy -> depends on MDP
 ```Julia
-struct Actor
+struct Agent
     pi
 end
 
-struct OffPolicyActor
+struct OffPolicyAgent
     b
 end
 
@@ -72,15 +86,16 @@ end
 ### Learning algorithm
 Shouldn't depend on specific MDP
 ```Julia
-function nstepQ (actor::OnPolicyActor, mdp)
+function nstepQ (agent::Agent, mdp)
 
 
 end
 ```
 
 ### Policy
-depends on MDP -> todo: should it store a pointer to its MDP?
-Static out: MDP to get state space and action space
+depends on MDP
+Static out: state space and action space (internally from pointer to its MDP)
+todo: is the static out really needed or will the calling side always know what legal states are?
 In: state
 Out: action
 learnable: todo find some good way, e.g. mutable or immutable? learn from action-value function
@@ -108,6 +123,23 @@ out: state + reward
 Examples: grid world, list of MDP-vertices, hide and seek game
 -> different implemetations needed depending on space size, dimension and sparsity
 todo
+
+grid world: just coordinates? would be N (where N = number of tiles)
+
+
+
+
+
+hide and seek:
+    coordinates of hider and seeker? no, then they could see each other
+    coordinates + coordinate of other agent if it's in line of sight
+        this would be N² + N I believe (separate N term is for the additional part-state that the other agent is invisible)
+        this needs to depend on time to enable the hider to win
+
+        do I need the entire state space at some point?
+        shouldn't it be possible to just store the encountered states, but this could also explode
+        do I need the entire action space at some point?
+
 
 ### Action space
 Actions are usually very limited, so a list should be fine.

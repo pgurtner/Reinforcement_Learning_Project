@@ -1,5 +1,6 @@
-name = "Reinforcement_Learning_Project"
+name = "RL_Simulation"
 version = "0.1.0"
+uuid = "53d1e2ce-4421-4573-93e5-4e1fff4f315d"
 authors = ["pg"]
 
 [deps]
