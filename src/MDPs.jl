@@ -1,19 +1,48 @@
+"""
+    module MDPs
+
+todo: description
+
+# todo
+- ideally this could use some abstract MDP functionality while GridWorld is only one implementation
+- the module name is a bit shit
+"""
 module MDPs
 
-# todo: ideally this could use some abstract MDP functionality while GridWorld is only one implementation
+"""
+    module GridWorld
 
-# todo grid world matrices are extremely sparce, a sparse matrix type would be more efficient
+Implementation of a simple 2D grid world MDP.
+
+# todo
+- grid world transition matrices are extremely sparce, a sparse matrix type would save a lot of memory
+"""
 module GridWorld
     using Random
     using Distributions
     using ...Utils: stdbasis
 
+    """
+        MDPConfig(probActions, rewards)
+
+    todo
+
+    # Fields
+    - `probActions::Array{Float64, 5}`: todo
+    - `rewards::Array{Float64, 3}`: todo
+    """
     struct MDPConfig
         probActions::Array{Float64, 5}
         rewards::Array{Float64, 3}
     end
 
-    # todo currently unused
+    """
+        module MDP
+
+    Meant as quality of life functionality for functions like e.g. `transition!(mdp, ACTION_UP)`.
+    
+    Currently unused and unimplemented.
+    """
     mutable struct MDP
         config::MDPConfig
         currentState::Tuple{Int, 2}
@@ -27,7 +56,17 @@ module GridWorld
     const ACTION_DOWN = 4
     const ACTIONS = [ACTION_RIGHT, ACTION_UP, ACTION_LEFT, ACTION_DOWN]
 
-    # doesn't set destination, that should be done together with setting rewards to avoid mismatches
+    """
+        _makeGridWorldTransitions(width, height)
+    
+    Sets up state transitions for a simple grid world MDP.
+    
+    Does not add a destination, i.e. a terminal state with positive reward. That is supposed to be done on the caller side because rewards have to altered accordingly and mismatches would mess up the entire simulation.
+
+    # Parameters
+    - `width::Int`: at least 3
+    - `height::Int`: at least 3
+    """
     function _makeGridworldTransitions(width::Int, height::Int)
         @assert width >= 3
         @assert height >= 3
@@ -57,6 +96,15 @@ module GridWorld
         return probActions
     end
 
+    """
+        _makeGridWorldRewards(width, height)
+    
+    Sets up reward matrix r[x, y, action] for a simple grid world MDP.
+
+    # Parameters
+    - `width::Int`: at least 3
+    - `height::Int`: at least 3
+    """
     function _makeGridWorldRewards(width::Int, height::Int)
         @assert width >= 3
         @assert height >= 3
@@ -77,7 +125,18 @@ module GridWorld
         return rewards
     end
 
+    """
+        makeSimpleGridWorld(width, height)
+
+    Create MDP for simple gridworld consisting of a widthxheight grid. Boundaries are terminal states and transitioning to them yields negative rewards. The tile at (ceil(width*0.75), ceil(height*0.5)) is the destination, meaning a terminal state and yielding a positive reward when transitioning to it.
+    
+    # Parameters
+    - `width::Int`: at least 3
+    - `height::Int`: at least 3
+    """
     function makeSimpleGridworld(width::Int, height::Int)
+        @assert width >= 3
+        @assert height >= 3
         probActions = _makeGridworldTransitions(width, height)
         rewards = _makeGridWorldRewards(width, height)
 
@@ -96,6 +155,13 @@ module GridWorld
         return MDPConfig(probActions, rewards)
     end
 
+    """
+        transition(mdp, xstate, ystate, action)
+
+    Draw next state given state (xstate, ystate) and action, and produce reward.
+
+    Returns `(xnew, ynew, reward)`.
+    """
     function transition(mdp::MDPConfig, xstate::Int, ystate::Int, action::Int)
         dims = size(mdp.rewards)
         @assert xstate <= dims[1]
