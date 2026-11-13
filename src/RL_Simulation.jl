@@ -1,6 +1,9 @@
 module RL_Simulation
 
-include("States.jl")
+include("utils.jl")
+
+include("MDPs.jl")
+
 include("Policies.jl")
 include("Agents.jl")
 
