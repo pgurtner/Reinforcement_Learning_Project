@@ -29,16 +29,18 @@ module GridWorld
 
     todo
 
+    This struct is meant to be instantiated from this module and only handed to functions of this module without accessing its fields from the caller side.
+
     # Fields
-    - `probActions::Array{Float64, 5}`: todo
-    - `rewards::Array{Float64, 3}`: todo
-    - `nonBoundaryTerminalStates::Vector{Pair{Int}}`: todo
+    - `_probStates::Array{Float64, 5}`: todo
+    - `_rewards::Array{Float64, 3}`: todo
+    - `_nonBoundaryTerminalStates::Vector{Pair{Int}}`: todo
 
     # todo
     - it would be nice to treat states actually as coordinate pairs and not separate them in some places like probActions and rewards
     """
     struct MDPConfig
-        _probActions::Array{Float64, 5}
+        _probStates::Array{Float64, 5}
         _rewards::Array{Float64, 3}
         _nonBoundaryTerminalStates::Vector{Pair{Int}}
     end
@@ -56,6 +58,7 @@ module GridWorld
     end
 
 
+    # todo: turn this into an enum
     # right = 1, up = 2, left = 3, down = 4 (inspired from unit circle sine function stuff)
     const ACTION_RIGHT = 1
     const ACTION_UP = 2
@@ -74,33 +77,33 @@ module GridWorld
     - `width::Int`: at least 3
     - `height::Int`: at least 3
     """
-    function _makeGridworldTransitions(width::Int, height::Int)
+    function _makeGridworldTransitions(width::Int, height::Int)::Array{Float64, 5}
         @assert width >= 3
         @assert height >= 3
 
-        probActions = zeros(width, height, length(ACTIONS), width, height)
+        probStates = zeros(width, height, length(ACTIONS), width, height)
 
         # set boundaries
         for x in 1:width
-            probActions[x, 1, :, x, :] .= stdbasis(height, 1)'
-            probActions[x, height, :, x, :] .= stdbasis(height, height)'
+            probStates[x, 1, :, x, :] .= stdbasis(height, 1)'
+            probStates[x, height, :, x, :] .= stdbasis(height, height)'
         end
         for y in 1:height
-            probActions[1, y, :, :, y] .= stdbasis(width, 1)'
-            probActions[width, y, :, :, y] .= stdbasis(width, width)'
+            probStates[1, y, :, :, y] .= stdbasis(width, 1)'
+            probStates[width, y, :, :, y] .= stdbasis(width, width)'
         end
 
         # normal transitions
         for x in 2:width-1
             for y in 2:height-1
-                probActions[x, y, ACTION_RIGHT, x+1, y] = 1.0
-                probActions[x, y, ACTION_UP, x, y-1] = 1.0
-                probActions[x, y, ACTION_LEFT, x-1, y] = 1.0
-                probActions[x, y, ACTION_DOWN, x, y+1] = 1.0
+                probStates[x, y, ACTION_RIGHT, x+1, y] = 1.0
+                probStates[x, y, ACTION_UP, x, y-1] = 1.0
+                probStates[x, y, ACTION_LEFT, x-1, y] = 1.0
+                probStates[x, y, ACTION_DOWN, x, y+1] = 1.0
             end
         end
 
-        return probActions, terminalStates
+        return probStates
     end
 
     """
@@ -112,7 +115,7 @@ module GridWorld
     - `width::Int`: at least 3
     - `height::Int`: at least 3
     """
-    function _makeGridWorldRewards(width::Int, height::Int)
+    function _makeGridWorldRewards(width::Int, height::Int)::Array{Float64, 3}
         @assert width >= 3
         @assert height >= 3
 
@@ -141,10 +144,10 @@ module GridWorld
     - `width::Int`: at least 3
     - `height::Int`: at least 3
     """
-    function makeSimpleGridworld(width::Int, height::Int)
+    function makeSimpleGridworld(width::Int, height::Int)::MDPConfig
         @assert width >= 3
         @assert height >= 3
-        probActions = _makeGridworldTransitions(width, height)
+        probStates = _makeGridworldTransitions(width, height)
         rewards = _makeGridWorldRewards(width, height)
 
         terminalStates = Pair{Int}[]
@@ -153,8 +156,8 @@ module GridWorld
         xdest = ceil(Int, width*0.75)
         ydest = ceil(Int, height*0.5)
 
-        probActions[xdest, ydest, :, :, :] = zeros(Float64, length(ACTIONS), width, height)
-        probActions[xdest, ydest, :, xdest, ydest] = ones(Float64, length(ACTIONS))
+        probStates[xdest, ydest, :, :, :] = zeros(Float64, length(ACTIONS), width, height)
+        probStates[xdest, ydest, :, xdest, ydest] = ones(Float64, length(ACTIONS))
 
         push!(terminalStates, Pair(xdest, ydest))
 
@@ -163,7 +166,7 @@ module GridWorld
         rewards[xdest-1, ydest, ACTION_RIGHT] = 1.0
         rewards[xdest, ydest-1, ACTION_DOWN] = 1.0
 
-        return MDPConfig(probActions, rewards, terminalStates)
+        return MDPConfig(probStates, rewards, terminalStates)
     end
 
     """
@@ -173,13 +176,13 @@ module GridWorld
 
     Returns `(xnew, ynew, reward)`.
     """
-    function transition(mdp::MDPConfig, state::Pair{Int}, action::Int)
+    function transition(mdp::MDPConfig, state::Pair{Int}, action::Int)::Pair{Pair{Int}, Float64}
         dims = size(mdp._rewards)
         @assert 0 < state.first <= dims[1]
         @assert 0 < state.second <= dims[2]
         @assert action in ACTIONS
 
-        probabilities = mdp._probActions[state.first, state.second, action, :, :]
+        probabilities = mdp._probStates[state.first, state.second, action, :, :]
         distr = Categorical(vec(probabilities))
         sample = rand(distr)
         newState = Tuple(CartesianIndices(probabilities)[sample])
@@ -194,7 +197,7 @@ module GridWorld
     
     Check if a grid world state is terminal.
     """
-    function is_terminal(mdp::MDPConfig, state::Pair{Int})
+    function is_terminal(mdp::MDPConfig, state::Pair{Int})::Bool
         dims = size(mdp._rewards)
         width = dims[1]
         height = dims[2]
@@ -202,7 +205,7 @@ module GridWorld
         @assert 0 < state.first <= width
         @assert 0 < state.second <= height
 
-        return (state.first == 1 || state.first == width || state.second == 1 || state.second == height) || (state in mdp.terminalStates)
+        return (state.first == 1 || state.first == width || state.second == 1 || state.second == height) || (state in mdp._nonBoundaryTerminalStates)
     end
 end
 

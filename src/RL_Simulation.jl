@@ -5,7 +5,8 @@ include("utils.jl")
 include("MDPs.jl")
 
 include("Policies.jl")
-include("Agents.jl")
+
+include("Learning.jl")
 
 function test()
     a::GridStateSpace = initial_state(GridStateSpace)
