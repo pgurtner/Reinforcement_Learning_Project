@@ -22,6 +22,8 @@ module GridWorld
     using Distributions
     using ...Utils: stdbasis
 
+    export makeSimpleGridworld, transition, is_terminal, ACTION_UP, ACTION_DOWN, ACTION_LEFT, ACTION_RIGHT
+
     """
         MDPConfig(probActions, rewards)
 
@@ -30,10 +32,15 @@ module GridWorld
     # Fields
     - `probActions::Array{Float64, 5}`: todo
     - `rewards::Array{Float64, 3}`: todo
+    - `nonBoundaryTerminalStates::Vector{Pair{Int}}`: todo
+
+    # todo
+    - it would be nice to treat states actually as coordinate pairs and not separate them in some places like probActions and rewards
     """
     struct MDPConfig
-        probActions::Array{Float64, 5}
-        rewards::Array{Float64, 3}
+        _probActions::Array{Float64, 5}
+        _rewards::Array{Float64, 3}
+        _nonBoundaryTerminalStates::Vector{Pair{Int}}
     end
 
     """
@@ -76,11 +83,11 @@ module GridWorld
         # set boundaries
         for x in 1:width
             probActions[x, 1, :, x, :] .= stdbasis(height, 1)'
-            probActions[x, end, :, x, :] .= stdbasis(height, height)'
+            probActions[x, height, :, x, :] .= stdbasis(height, height)'
         end
         for y in 1:height
             probActions[1, y, :, :, y] .= stdbasis(width, 1)'
-            probActions[end, y, :, :, y] .= stdbasis(width, width)'
+            probActions[width, y, :, :, y] .= stdbasis(width, width)'
         end
 
         # normal transitions
@@ -93,7 +100,7 @@ module GridWorld
             end
         end
 
-        return probActions
+        return probActions, terminalStates
     end
 
     """
@@ -140,6 +147,8 @@ module GridWorld
         probActions = _makeGridworldTransitions(width, height)
         rewards = _makeGridWorldRewards(width, height)
 
+        terminalStates = Pair{Int}[]
+
         # set destination
         xdest = ceil(Int, width*0.75)
         ydest = ceil(Int, height*0.5)
@@ -147,12 +156,14 @@ module GridWorld
         probActions[xdest, ydest, :, :, :] = zeros(Float64, length(ACTIONS), width, height)
         probActions[xdest, ydest, :, xdest, ydest] = ones(Float64, length(ACTIONS))
 
+        push!(terminalStates, Pair(xdest, ydest))
+
         rewards[xdest+1, ydest, ACTION_LEFT] = 1.0
         rewards[xdest, ydest+1, ACTION_UP] = 1.0
         rewards[xdest-1, ydest, ACTION_RIGHT] = 1.0
         rewards[xdest, ydest-1, ACTION_DOWN] = 1.0
 
-        return MDPConfig(probActions, rewards)
+        return MDPConfig(probActions, rewards, terminalStates)
     end
 
     """
@@ -162,24 +173,37 @@ module GridWorld
 
     Returns `(xnew, ynew, reward)`.
     """
-    function transition(mdp::MDPConfig, xstate::Int, ystate::Int, action::Int)
-        dims = size(mdp.rewards)
-        @assert xstate <= dims[1]
-        @assert xstate > 0
-        @assert ystate <= dims[2]
-        @assert ystate > 0
+    function transition(mdp::MDPConfig, state::Pair{Int}, action::Int)
+        dims = size(mdp._rewards)
+        @assert 0 < state.first <= dims[1]
+        @assert 0 < state.second <= dims[2]
         @assert action in ACTIONS
 
-        probabilities = mdp.probActions[xstate, ystate, action, :, :]
+        probabilities = mdp._probActions[state.first, state.second, action, :, :]
         distr = Categorical(vec(probabilities))
         sample = rand(distr)
-        xnew, ynew = Tuple(CartesianIndices(probabilities)[sample])
+        newState = Tuple(CartesianIndices(probabilities)[sample])
 
-        reward = mdp.rewards[xstate, ystate, action]
+        reward = mdp._rewards[state.first, state.second, action]
 
-        return xnew, ynew, reward
+        return newState, reward
     end
 
+    """
+        is_terminal(mdp, state)
+    
+    Check if a grid world state is terminal.
+    """
+    function is_terminal(mdp::MDPConfig, state::Pair{Int})
+        dims = size(mdp._rewards)
+        width = dims[1]
+        height = dims[2]
+
+        @assert 0 < state.first <= width
+        @assert 0 < state.second <= height
+
+        return (state.first == 1 || state.first == width || state.second == 1 || state.second == height) || (state in mdp.terminalStates)
+    end
 end
 
 end
