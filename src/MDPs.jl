@@ -67,6 +67,21 @@ module GridWorld
     const ACTIONS = [ACTION_RIGHT, ACTION_UP, ACTION_LEFT, ACTION_DOWN]
 
     """
+        _assert_valid_state(mdp, state)
+    
+    Asserts that state is included in the state space of mdp.
+    """
+    function _assert_valid_state(mdp::MDPConfig, state::Pair{Int})
+        dims = size(mdp._rewards)
+        width = dims[1]
+        height = dims[2]
+
+        @assert 0 < state.first <= width
+        @assert 0 < state.second <= height
+    end
+
+
+    """
         _makeGridWorldTransitions(width, height)
     
     Sets up state transitions for a simple grid world MDP.
@@ -171,16 +186,14 @@ module GridWorld
     end
 
     """
-        transition(mdp, xstate, ystate, action)
+        transition(mdp, state, action)
 
-    Draw next state given state (xstate, ystate) and action, and produce reward.
+    Draw next state given state and action, and produce reward.
 
     Returns `(xnew, ynew, reward)`.
     """
     function transition(mdp::MDPConfig, state::Pair{Int}, action::Int)::Tuple{Pair{Int}, Float64}
-        dims = size(mdp._rewards)
-        @assert 0 < state.first <= dims[1]
-        @assert 0 < state.second <= dims[2]
+        _assert_valid_state(mdp, state)
         @assert action in ACTIONS
 
         probabilities = mdp._probStates[state.first, state.second, action, :, :]
@@ -195,19 +208,38 @@ module GridWorld
     end
 
     """
+        reward(mdp, state, action)
+
+    Return reward for state without having to transition. Mostly used for plotting.
+    """
+    function reward(mdp::MDPConfig, state::Pair{Int}, action::Int)
+        _assert_valid_state(mdp, state)
+
+        return mdp._rewards[state.first, state.second, action]
+    end
+
+    """
+        _is_boundary(mdp, state)
+    
+    Checks whether state lays on the boundary of mdp, i.e. on the outer edges.
+    """
+    function _is_boundary(mdp::MDPConfig, state::Pair{Int})::Bool
+        dims = size(mdp._rewards)
+        width = dims[1]
+        height = dims[2]
+
+        return (state.first == 1 || state.first == width || state.second == 1 || state.second == height)
+    end
+
+    """
         is_terminal(mdp, state)
     
     Check if a grid world state is terminal.
     """
     function is_terminal(mdp::MDPConfig, state::Pair{Int})::Bool
-        dims = size(mdp._rewards)
-        width = dims[1]
-        height = dims[2]
+        _assert_valid_state(mdp, state)
 
-        @assert 0 < state.first <= width
-        @assert 0 < state.second <= height
-
-        return (state.first == 1 || state.first == width || state.second == 1 || state.second == height) || (state in mdp._nonBoundaryTerminalStates)
+        return _is_boundary(mdp, state) || (state in mdp._nonBoundaryTerminalStates)
     end
 
     function dimensions(mdp::MDPConfig)::Pair{Int}
