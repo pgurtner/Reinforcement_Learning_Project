@@ -22,7 +22,7 @@ module GridWorld
     using Distributions
     using ...Utils: stdbasis
 
-    export makeSimpleGridworld, transition, is_terminal, ACTION_UP, ACTION_DOWN, ACTION_LEFT, ACTION_RIGHT
+    export makeSimpleGridworld, transition, is_terminal, ACTION_UP, ACTION_DOWN, ACTION_LEFT, ACTION_RIGHT, dimensions
 
     """
         MDPConfig(probActions, rewards)
@@ -153,7 +153,8 @@ module GridWorld
         terminalStates = Pair{Int}[]
 
         # set destination
-        xdest = ceil(Int, width*0.75)
+        # todo make sure that this doesn't land on the boundary
+        xdest = ceil(Int, width*0.8)
         ydest = ceil(Int, height*0.5)
 
         probStates[xdest, ydest, :, :, :] = zeros(Float64, length(ACTIONS), width, height)
@@ -176,7 +177,7 @@ module GridWorld
 
     Returns `(xnew, ynew, reward)`.
     """
-    function transition(mdp::MDPConfig, state::Pair{Int}, action::Int)::Pair{Pair{Int}, Float64}
+    function transition(mdp::MDPConfig, state::Pair{Int}, action::Int)::Tuple{Pair{Int}, Float64}
         dims = size(mdp._rewards)
         @assert 0 < state.first <= dims[1]
         @assert 0 < state.second <= dims[2]
@@ -186,10 +187,11 @@ module GridWorld
         distr = Categorical(vec(probabilities))
         sample = rand(distr)
         newState = Tuple(CartesianIndices(probabilities)[sample])
+        @assert length(newState) == 2
 
         reward = mdp._rewards[state.first, state.second, action]
 
-        return newState, reward
+        return Pair(newState[1], newState[2]), reward
     end
 
     """
@@ -206,6 +208,12 @@ module GridWorld
         @assert 0 < state.second <= height
 
         return (state.first == 1 || state.first == width || state.second == 1 || state.second == height) || (state in mdp._nonBoundaryTerminalStates)
+    end
+
+    function dimensions(mdp::MDPConfig)::Pair{Int}
+        xdim, ydim, _ = size(mdp._rewards)
+
+        return Pair(xdim, ydim)
     end
 end
 
