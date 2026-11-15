@@ -48,6 +48,8 @@ module GridWorld
         @assert qDims[1] == policyDims[1]
         @assert qDims[2] == policyDims[2]
 
+        @assert qDims[3]*ϵ <= 1 "ϵ in ϵ-greedy is too high, max 1/n for n options"
+
         probabilities = fill(ϵ, qDims[3])
         a = argmax(Q[state.first, state.second, :])
         probabilities[a] = 1.0 - ((qDims[3] - 1) * ϵ)
