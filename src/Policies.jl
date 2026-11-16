@@ -48,11 +48,16 @@ module GridWorld
         @assert qDims[1] == policyDims[1]
         @assert qDims[2] == policyDims[2]
 
-        @assert qDims[3]*ϵ <= 1 "ϵ in ϵ-greedy is too high, max 1/n for n options"
 
-        probabilities = fill(ϵ, qDims[3])
-        a = argmax(Q[state.first, state.second, :])
-        probabilities[a] = 1.0 - ((qDims[3] - 1) * ϵ)
+        probabilities = fill(ϵ/qDims[3], qDims[3])
+        
+        # break ties uniformly
+        maxValue = maximum(Q[state.first, state.second, :])
+        optimalActions = [action for action in MDPs.GridWorld.ACTIONS if Q[state.first, state.second, action] == maxValue]
+        for a in optimalActions
+            v = (1 - ϵ)/length(optimalActions)
+            probabilities[a] += v
+        end
 
         π._probActions[state.first, state.second] = Categorical(probabilities)
     end
@@ -60,7 +65,6 @@ module GridWorld
     function makeDeterministicPolicy(stateSpaceDims::Pair{Int})::Policy
         @assert stateSpaceDims.first > 0
         @assert stateSpaceDims.second > 0
-        @assert length(actions) > 0
 
         probabilities = zeros(Float64, length(MDPs.GridWorld.ACTIONS))
         probabilities[1] = 1.0
