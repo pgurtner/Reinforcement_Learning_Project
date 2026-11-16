@@ -1,3 +1,8 @@
+"""
+Some tests and debugging helpers like an entrypoint for the VS code debugger. Not meant to be included in the report.
+"""
+
+
 include("RL_Simulation.jl")
 
 using .RL_Simulation
