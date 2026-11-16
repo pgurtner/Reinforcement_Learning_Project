@@ -48,11 +48,6 @@ function drawGridWorld(mdp::MDPs.GridWorld.MDPConfig)
         color=:black
     )
 
-    # todo: don't hardcode this but turn it into a parameter or something
-    xstart = ceil(Int, dims.first*0.2)
-    ystart = ceil(Int, dims.second*0.5)
-    scatter!(ax, [xstart], [ystart]; marker=:circle, markersize=25, color=:green)
-
     return fig, ax
 end
 
