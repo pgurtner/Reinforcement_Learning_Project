@@ -110,4 +110,45 @@ function drawOptimalActions(mdp::MDPs.MDPConfig, Q::Array{Float64, 3})
     display(fig)
 end
 
+function drawDeterministicPolicy(mdp::MDPs.MDPConfig, Q::Array{Float64, 3})
+    # todo: check that dimensions of mdp and Q match
+    fig, ax = drawGridWorld(mdp)
+
+    width, height = MDPs.dimensions(mdp)
+
+    for x in 1:width
+        for y in 1:height
+            if MDPs.is_terminal(mdp, Pair(x, y))
+                continue
+            end
+
+            action = argmax(Q[x, y, :])
+            if Q[x, y, action] == 0.0
+                continue
+            end
+
+            dx = 0
+            dy = 0
+            if action == MDPs.ACTION_RIGHT
+                dx = 1
+            elseif action == MDPs.ACTION_UP
+                dy = -1
+            elseif action == MDPs.ACTION_LEFT
+                dx = -1
+            else
+                dy = 1
+            end
+
+            arrows2d!(ax,
+                [x], [y],
+                [dx], [dy],
+                color = :black,
+                lengthscale = 0.5
+            )
+        end
+    end
+
+    display(fig)
+end
+
 end
