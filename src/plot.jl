@@ -11,8 +11,8 @@ module Plot
 using CairoMakie
 using ..MDPs
 
-function drawGridWorld(mdp::MDPs.GridWorld.MDPConfig)
-    dims = MDPs.GridWorld.dimensions(mdp)
+function drawGridWorld(mdp::MDPs.MDPConfig)
+    dims = MDPs.dimensions(mdp)
     width = dims[1]
     height = dims[2]
 
@@ -41,7 +41,7 @@ function drawGridWorld(mdp::MDPs.GridWorld.MDPConfig)
     ylims!(ax, height + 1, 0)
 
     # draw terminal states
-    terminalStates = [(x, y) for x in 1:width for y in 1:height if MDPs.GridWorld.is_terminal(mdp, Pair(x ,y))]
+    terminalStates = [(x, y) for x in 1:width for y in 1:height if MDPs.is_terminal(mdp, Pair(x ,y))]
     scatter!(ax, first.(terminalStates), last.(terminalStates);
         marker=:circle,
         markersize=25,
@@ -55,17 +55,17 @@ function drawQ(Q::Array{Float64, 3})
 end
 
 # currently only draws arrows when argmax action has a non-zero value to avoid displaying unlearnt actions
-function drawOptimalActions(mdp::MDPs.GridWorld.MDPConfig, Q::Array{Float64, 3})
+function drawOptimalActions(mdp::MDPs.MDPConfig, Q::Array{Float64, 3})
     # todo: check that dimensions of mdp and Q match
 
     fig, ax = drawGridWorld(mdp)
 
-    width, height = MDPs.GridWorld.dimensions(mdp)
+    width, height = MDPs.dimensions(mdp)
     qdims = size(Q)
 
     for x in 1:width
         for y in 1:height
-            if MDPs.GridWorld.is_terminal(mdp, Pair(x, y))
+            if MDPs.is_terminal(mdp, Pair(x, y))
                 continue
             end
 
@@ -76,11 +76,11 @@ function drawOptimalActions(mdp::MDPs.GridWorld.MDPConfig, Q::Array{Float64, 3})
 
             # dx = 0
             # dy = 0
-            # if action == MDPs.GridWorld.ACTION_RIGHT
+            # if action == MDPs.ACTION_RIGHT
             #     dx = 1
-            # elseif action == MDPs.GridWorld.ACTION_UP
+            # elseif action == MDPs.ACTION_UP
             #     dy = -1
-            # elseif action == MDPs.GridWorld.ACTION_LEFT
+            # elseif action == MDPs.ACTION_LEFT
             #     dx = -1
             # else
             #     dy = 1
@@ -100,10 +100,10 @@ function drawOptimalActions(mdp::MDPs.GridWorld.MDPConfig, Q::Array{Float64, 3})
             else
                 :red
             end
-            arrows2d!(ax, [x], [y], [1], [0], color = c(Q[x, y, MDPs.GridWorld.ACTION_RIGHT]), lengthscale=abs(Q[x, y, MDPs.GridWorld.ACTION_RIGHT])*scale)
-            arrows2d!(ax, [x], [y], [0], [-1], color = c(Q[x, y, MDPs.GridWorld.ACTION_UP]), lengthscale=abs(Q[x, y, MDPs.GridWorld.ACTION_UP])*scale)
-            arrows2d!(ax, [x], [y], [-1], [0], color = c(Q[x, y, MDPs.GridWorld.ACTION_LEFT]), lengthscale=abs(Q[x, y, MDPs.GridWorld.ACTION_LEFT])*scale)
-            arrows2d!(ax, [x], [y], [0], [1], color = c(Q[x, y, MDPs.GridWorld.ACTION_DOWN]), lengthscale=abs(Q[x, y, MDPs.GridWorld.ACTION_DOWN])*scale)
+            arrows2d!(ax, [x], [y], [1], [0], color = c(Q[x, y, MDPs.ACTION_RIGHT]), lengthscale=abs(Q[x, y, MDPs.ACTION_RIGHT])*scale)
+            arrows2d!(ax, [x], [y], [0], [-1], color = c(Q[x, y, MDPs.ACTION_UP]), lengthscale=abs(Q[x, y, MDPs.ACTION_UP])*scale)
+            arrows2d!(ax, [x], [y], [-1], [0], color = c(Q[x, y, MDPs.ACTION_LEFT]), lengthscale=abs(Q[x, y, MDPs.ACTION_LEFT])*scale)
+            arrows2d!(ax, [x], [y], [0], [1], color = c(Q[x, y, MDPs.ACTION_DOWN]), lengthscale=abs(Q[x, y, MDPs.ACTION_DOWN])*scale)
         end
     end
 

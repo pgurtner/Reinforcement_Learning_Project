@@ -16,18 +16,18 @@ n-step Sarsa implementation for grid world MDPs.
 - `ϵ::Float64`: parameter for ϵ-greedy policy π
 - `α::Float64`: learning rate
 """
-function nstepSarsa(mdp::MDPs.GridWorld.MDPConfig; n::Int, ϵ::Float64, α::Float64, γ::Float64, nepisodes::Int)::Tuple{Policies.GridWorld.Policy, Array{Float64, 3}}
+function nstepSarsa(mdp::MDPs.MDPConfig; n::Int, ϵ::Float64, α::Float64, γ::Float64, nepisodes::Int)::Tuple{Policies.Policy, Array{Float64, 3}}
     @assert n > 0
     @assert 0 <= ϵ <= 1
     @assert 0 <= α <= 1
     @assert 0 <= γ <= 1
 
-    dims = MDPs.GridWorld.dimensions(mdp)
+    dims = MDPs.dimensions(mdp)
 
-    Q = fill(0.0, dims.first, dims.second, length(MDPs.GridWorld.ACTIONS))
-    π = Policies.GridWorld.makeUniformlyRandomPolicy(dims)
+    Q = fill(0.0, dims.first, dims.second, length(MDPs.ACTIONS))
+    π = Policies.makeUniformlyRandomPolicy(dims)
 
-    initialStates = [Pair(x, y) for x in 1:dims[1] for y in 1:dims[2] if !MDPs.GridWorld.is_terminal(mdp, Pair(x, y))]
+    initialStates = [Pair(x, y) for x in 1:dims[1] for y in 1:dims[2] if !MDPs.is_terminal(mdp, Pair(x, y))]
 
     # Julia array indices start from 1. To keep the algorithm close to the book,
     # I added a +1 to all relevant array accesses.
@@ -37,7 +37,7 @@ function nstepSarsa(mdp::MDPs.GridWorld.MDPConfig; n::Int, ϵ::Float64, α::Floa
         push!(S, S1)
 
         A = Int[]
-        push!(A, Policies.GridWorld.evaluate(π, S[0 + 1]))
+        push!(A, Policies.evaluate(π, S[0 + 1]))
 
         R = Float64[]
         # R_0 doesn't really exist in the algorithm, just use 0.0
@@ -50,15 +50,15 @@ function nstepSarsa(mdp::MDPs.GridWorld.MDPConfig; n::Int, ϵ::Float64, α::Floa
 
         while T_infinite || τ < T - 1
             if T_infinite || t < T
-                newS, nextR = MDPs.GridWorld.transition(mdp, S[t + 1], A[t + 1])
+                newS, nextR = MDPs.transition(mdp, S[t + 1], A[t + 1])
                 push!(S, newS)
                 push!(R, nextR)
 
-                if MDPs.GridWorld.is_terminal(mdp, S[t + 1 + 1])
+                if MDPs.is_terminal(mdp, S[t + 1 + 1])
                     T = t + 1
                     T_infinite = false
                 else
-                    push!(A, Policies.GridWorld.evaluate(π, S[t + 1 + 1]))
+                    push!(A, Policies.evaluate(π, S[t + 1 + 1]))
                 end
             end
             
@@ -82,7 +82,7 @@ function nstepSarsa(mdp::MDPs.GridWorld.MDPConfig; n::Int, ϵ::Float64, α::Floa
 
                 Q[S[τ + 1].first, S[τ + 1].second, A[τ + 1]] += α*(G - Q[S[τ + 1].first, S[τ + 1].second, A[τ + 1]])
 
-                Policies.GridWorld.updateState!(π, S[τ + 1], Q, ϵ)
+                Policies.updateState!(π, S[τ + 1], Q, ϵ)
             end
             
             t += 1
