@@ -18,12 +18,38 @@ mutable struct Policy
     _probActions::Array{DiscreteDistribution, 2}
 end
 
-function evaluate(π::Policy, state::Pair{Int})::Int
+function _assert_valid_state(π::Policy, state::Pair{Int})
     dims = size(π._probActions)
     @assert 0 < state.first <= dims[1]
     @assert 0 < state.second <= dims[2]
+end
+
+"""
+todo
+"""
+function evaluate(π::Policy, state::Pair{Int})::Int
+    _assert_valid_state(π, state)
 
     return rand(π._probActions[state.first, state.second])
+end
+
+function _extractProbability(d::DiscreteUniform, _::Int)
+    return d.pv
+end
+
+function _extractProbability(d::Categorical, action::Int)
+    return d.p[action]
+end
+
+"""
+"""
+function probActionGivenState(π::Policy, action::Int, state::Pair{Int})
+    _assert_valid_state(π, state)
+
+    # π._probActions contains (currently) distribution instances of DiscreteUniform and Categorical
+    # these have different fields from which one can get individual probabilities, so this has to be
+    # extracted with overloaded functions (or some dynamic type checking if Julia supports this)
+    return _extractProbability(π._probActions[state.first, state.second], action)
 end
 
 """
@@ -37,11 +63,10 @@ This is a mutating function to avoid deleting and allocating arrays all the time
 - maybe remove asserts if they're too performance heavy
 """
 function updateState!(π::Policy, state::Pair{Int}, Q::Array{Float64, 3}, ϵ::Float64)
-    policyDims = size(π._probActions)
-    @assert 0 < state.first <= policyDims[1]
-    @assert 0 < state.second <= policyDims[2]
+    _assert_valid_state(π, state)
 
     qDims = size(Q)
+    policyDims = size(π._probActions)
     @assert qDims[1] == policyDims[1]
     @assert qDims[2] == policyDims[2]
 

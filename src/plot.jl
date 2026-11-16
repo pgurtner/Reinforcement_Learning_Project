@@ -151,4 +151,25 @@ function drawDeterministicPolicy(mdp::MDPs.MDPConfig, Q::Array{Float64, 3})
     display(fig)
 end
 
+function drawStateValueFunction(mdp::MDPs.MDPConfig, V::Array{Float64, 2})
+    fig, ax = drawGridWorld(mdp)
+
+    width, height = MDPs.dimensions(mdp)
+
+    heatmap!(ax, 1:width, 1:height, V)
+
+    # text!(ax, 1:width, 1:height, text=string.(V), align=(:center, :center))
+    for x in 1:width
+        for y in 1:height
+            if MDPs.is_terminal(mdp, Pair(x, y))
+                continue
+            end
+
+            text!(ax, x, y, text=string(round(V[x, y], digits=1)), align=(:center, :center))
+        end
+    end
+    
+    display(fig)
+end
+
 end
