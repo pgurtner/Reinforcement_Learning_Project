@@ -1,6 +1,7 @@
 module Learning
 using ..MDPs
 using ..Policies
+using Random
 
 export nstepSarsa
 
@@ -19,17 +20,20 @@ function nstepSarsa(mdp::MDPs.GridWorld.MDPConfig; n::Int, ϵ::Float64, α::Floa
     @assert n > 0
     @assert 0 <= ϵ <= 1
     @assert 0 <= α <= 1
+    @assert 0 <= γ <= 1
 
     dims = MDPs.GridWorld.dimensions(mdp)
 
     Q = fill(0.0, dims.first, dims.second, length(MDPs.GridWorld.ACTIONS))
     π = Policies.GridWorld.makeUniformlyRandomPolicy(dims)
-    S1 = Pair(ceil(Int, dims.first*0.2), ceil(Int, dims.second*0.5))
+
+    initialStates = [Pair(x, y) for x in 1:dims[1] for y in 1:dims[2] if !MDPs.GridWorld.is_terminal(mdp, Pair(x, y))]
 
     # Julia array indices start from 1. To keep the algorithm close to the book,
     # I added a +1 to all relevant array accesses.
     for _ in 1:nepisodes
         S = Pair{Int}[]
+        S1 = rand(initialStates)
         push!(S, S1)
 
         A = Int[]
