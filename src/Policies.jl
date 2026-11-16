@@ -108,4 +108,23 @@ function makeUniformlyRandomPolicy(stateSpaceDims::Pair{Int})::Policy
 
     return Policy(probActions)
 end
+
+function makeGreedyPolicy(Q::Array{Float64, 3})::Policy
+    dims = size(Q)
+
+    probActions = Array{DiscreteDistribution, 2}(undef, dims[1], dims[2])
+
+    for x in 1:dims[1]
+        for y in 1:dims[2]
+            p = zeros(dims[3])
+            a = argmax(Q[x, y, :])
+            p[a] = 1.0
+            d =  Categorical(p)
+
+            probActions[x, y] = d
+        end
+    end
+
+    return Policy(probActions)
+end
 end

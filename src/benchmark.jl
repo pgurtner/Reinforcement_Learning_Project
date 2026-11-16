@@ -33,4 +33,48 @@ function stateValueFunctionFromQ(π::Policies.Policy, Q::Array{Float64, 3})::Arr
     return v
 end
 
+function exactActionValueFunction(mdp::MDPs.MDPConfig, γ::Float64)
+    dims = MDPs.dimensions(mdp)
+    Q = zeros(dims[1], dims[2], length(MDPs.ACTIONS))
+
+    for a in MDPs.ACTIONS
+        # todo: access to hidden field
+        destinations = findall(v -> v > 0, mdp._rewards[:, :, a])
+
+        for d in destinations
+            dx, dy = d.I
+            for x in 1:dims[1]
+                for y in 1:dims[2]
+                    if MDPs.is_terminal(mdp, Pair(x, y))
+                        continue
+                    end
+
+                    # todo: access to hidden field
+                    Q[x, y, a] += mdp._rewards[d, a] * γ^(abs(dx - x) + abs(dy - y))
+                end
+            end
+        end
+    end
+
+    return Q
+end
+
+"""
+todo
+Compute exact state-value function for mdp for error computations
+"""
+function exactStateValueFunction(Q::Array{Float64, 3})::Array{Float64, 2}
+    π = Policies.makeGreedyPolicy(Q)
+    V = stateValueFunctionFromQ(π, Q)
+    return V
+end
+
+function rms(A::Array{Float64, N}, B::Array{Float64, N}) where N <: Int
+    @assert size(A) == size(B)
+    dims = size(A)
+    n = prod(dims)
+     
+    return 1/n * sum((A .- B) .^ 2)
+end
+
 end
