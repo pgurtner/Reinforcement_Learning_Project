@@ -1,6 +1,8 @@
 """
     module Benchmark
 
+The module containing everything around running benchmarks. Plotting is handled by the module Plots.
+
 # ideas
 - convergence
 - performance compared to other approaches
@@ -14,6 +16,9 @@ module Benchmark
 using ..Policies
 using ..MDPs
 
+"""
+todo
+"""
 function stateValueFunctionFromQ(π::Policies.Policy, Q::Array{Float64, 3})::Array{Float64, 2}
     # todo: assert matching dimensions
 
@@ -33,6 +38,9 @@ function stateValueFunctionFromQ(π::Policies.Policy, Q::Array{Float64, 3})::Arr
     return v
 end
 
+"""
+todo
+"""
 function exactActionValueFunction(mdp::MDPs.MDPConfig, γ::Float64)
     dims = MDPs.dimensions(mdp)
     Q = zeros(dims[1], dims[2], length(MDPs.ACTIONS))
@@ -69,12 +77,22 @@ function exactStateValueFunction(Q::Array{Float64, 3})::Array{Float64, 2}
     return V
 end
 
-function rms(A::Array{Float64, N}, B::Array{Float64, N}) where N <: Int
+"""
+todo
+"""
+function meanSquaredError(A::Array{Float64, N}, B::Array{Float64, N}) where N <: Int
     @assert size(A) == size(B)
     dims = size(A)
     n = prod(dims)
      
     return 1/n * sum((A .- B) .^ 2)
+end
+
+"""
+todo
+"""
+function rms(A::Array{Float64, N}, B::Array{Float64, N}) where N <: Int
+    return sqrt.(meanSquaredError(A, B))
 end
 
 end
