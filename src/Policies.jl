@@ -223,4 +223,40 @@ function makeGreedyPolicy(Q::Array{Float64, 3})::Policy
 
     return Policy(probActions)
 end
+
+"""
+
+Used for benchmarking.
+todo
+"""
+function stateValueFunctionFromQ(π::Policies.Policy, Q::Array{Float64, 3})::Array{Float64, 2}
+    # todo: assert matching dimensions
+
+    dims = size(Q)
+    v = zeros(dims[1], dims[2])
+
+    # todo this can probably be written with element-wise operations
+    for x in 1:dims[1]
+        for y in 1:dims[2]
+            s = Pair(x, y)
+            for a in MDPs.ACTIONS
+                v[x, y] += Policies.probActionGivenState(π, a, s) * Q[x, y, a]
+            end
+        end
+    end
+
+    return v
+end
+
+# """
+# todo
+# Compute exact state-value function for mdp for error computations for benchmarks.
+# """
+# function exactStateValueFunction(Q::Array{Float64, 3})::Array{Float64, 2}
+#     # todo: shouldn't the exact Q be computed here nistead of handed as a parameter?
+#     π = Policies.makeGreedyPolicy(Q)
+#     V = stateValueFunctionFromQ(π, Q)
+#     return V
+# end
+
 end

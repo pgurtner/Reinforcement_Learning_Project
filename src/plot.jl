@@ -1,9 +1,9 @@
 """
-    module Plot
+    module GridWorldPlotting
 
 Functions for plotting graphs and visualizing the grid worlds and things like action-value functions or state-value functions.
 """
-module Plot
+module GridWorldPlotting
 using CairoMakie
 using ..MDPs
 

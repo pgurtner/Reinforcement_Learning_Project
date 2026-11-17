@@ -13,86 +13,49 @@ The module containing everything around running benchmarks. Plotting is handled 
 
 """
 module Benchmark
-using ..Policies
-using ..MDPs
 
-"""
-todo
-"""
-function stateValueFunctionFromQ(π::Policies.Policy, Q::Array{Float64, 3})::Array{Float64, 2}
-    # todo: assert matching dimensions
 
-    dims = size(Q)
-    v = zeros(dims[1], dims[2])
+module nstepSarsa
+    using CairoMakie
+    using ...Learning
+    using ...MDPs
+    using ...GridWorldPlotting
+    using ...Policies
 
-    # todo this can probably be written with element-wise operations
-    for x in 1:dims[1]
-        for y in 1:dims[2]
-            s = Pair(x, y)
-            for a in MDPs.ACTIONS
-                v[x, y] += Policies.probActionGivenState(π, a, s) * Q[x, y, a]
-            end
-        end
+    function basicConvergence()
+        mdp = MDPs.makeSimpleGridworld(10, 10)
+        π, Q, errors = Learning.nstepSarsa(mdp, n=10, ϵ=0.1, α=0.1, γ=0.5, nepisodes=10000)
+
+        fig = Figure(size = (800, 500))
+        ax = Axis(fig[1, 1],
+            xlabel = "Episode",
+            ylabel="Mean squared error",
+            #yscale = log10,
+            title="Basic convergence of n-step Sarsa"
+        )
+
+        lines!(ax, 1:length(errors), errors,
+            linewidth=2,
+          #  marker = :circle,
+           # markersize = 8,
+        )
+
+        #axislegend(ax, position = :rt)
+        display(fig)
+
+        V = Policies.stateValueFunctionFromQ(π, Q)
+        GridWorldPlotting.drawStateValueFunction(mdp, V)
     end
 
-    return v
-end
-
-"""
-todo
-"""
-function exactActionValueFunction(mdp::MDPs.MDPConfig, γ::Float64)
-    dims = MDPs.dimensions(mdp)
-    Q = zeros(dims[1], dims[2], length(MDPs.ACTIONS))
-
-    for a in MDPs.ACTIONS
-        # todo: access to hidden field
-        destinations = findall(v -> v > 0, mdp._rewards[:, :, a])
-
-        for d in destinations
-            dx, dy = d.I
-            for x in 1:dims[1]
-                for y in 1:dims[2]
-                    if MDPs.is_terminal(mdp, Pair(x, y))
-                        continue
-                    end
-
-                    # todo: access to hidden field
-                    Q[x, y, a] += mdp._rewards[d, a] * γ^(abs(dx - x) + abs(dy - y))
-                end
-            end
-        end
+    function compareN()
     end
 
-    return Q
+    function compareEps()
+    end
+
+    function compareAlpha()
+    end
 end
 
-"""
-todo
-Compute exact state-value function for mdp for error computations
-"""
-function exactStateValueFunction(Q::Array{Float64, 3})::Array{Float64, 2}
-    π = Policies.makeGreedyPolicy(Q)
-    V = stateValueFunctionFromQ(π, Q)
-    return V
-end
-
-"""
-todo
-"""
-function meanSquaredError(A::Array{Float64, N}, B::Array{Float64, N}) where N <: Int
-    @assert size(A) == size(B)
-    dims = size(A)
-    n = prod(dims)
-     
-    return 1/n * sum((A .- B) .^ 2)
-end
-
-"""
-todo
-"""
-function rms(A::Array{Float64, N}, B::Array{Float64, N}) where N <: Int
-    return sqrt.(meanSquaredError(A, B))
-end
 
 end

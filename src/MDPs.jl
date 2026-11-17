@@ -294,4 +294,74 @@ function dimensions(mdp::MDPConfig)::Pair{Int}
 
     return Pair(xdim, ydim)
 end
+
+"""
+todo
+
+Used for error computations for benchmarks.
+"""
+function exactValueFunctions(mdp::MDPs.MDPConfig; γ::Float64, tol = 1e-12)::Tuple{Array{Float64, 2}, Array{Float64, 3}}
+    dims = MDPs.dimensions(mdp)
+    
+    V = zeros(dims[1], dims[2])
+    Q = zeros(dims[1], dims[2], length(MDPs.ACTIONS))
+
+    # value iteration to get exact V
+    while true
+        Vnew = zeros(dims[1], dims[2])
+
+        for x in 1:dims[1]
+            for y in 1:dims[2]
+                s = Pair(x, y)
+
+                if MDPs.is_terminal(mdp, s)
+                    continue
+                end
+
+                values = Float64[]
+
+                for a in MDPs.ACTIONS
+                    sNext, r = transition(mdp, s, a)
+                    
+                    v = r + γ * V[sNext.first, sNext.second]
+                    
+                    push!(values, v)
+                end
+
+                Vnew[x, y] = maximum(values)
+            end
+        end
+
+        if maximum(abs.(Vnew .- V)) < tol
+            V = Vnew
+            break
+        end
+
+        V = Vnew
+    end
+
+    # calculate exact Q
+    for x in 1:dims[1]
+        for y in 1:dims[2]
+            s = Pair(x, y)
+
+            if MDPs.is_terminal(mdp, s)
+                continue
+            end
+
+            for a in MDPs.ACTIONS
+                sNext, r = transition(mdp, s, a)
+
+                Q[x, y, a] = r
+
+                if !MDPs.is_terminal(mdp, sNext)
+                    Q[x, y, a] += γ * V[sNext.first, sNext.second]
+                end
+            end
+        end
+    end
+
+    return V, Q
+end
+
 end

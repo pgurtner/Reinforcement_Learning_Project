@@ -6,6 +6,7 @@ The module that contains all the learning algorithms for grid world MDPs. Curren
 module Learning
 using ..MDPs
 using ..Policies
+using ..Utils
 using Random
 
 """
@@ -24,7 +25,7 @@ n-step Sarsa implementation for grid world MDPs. Overall code structure and vari
 # Returns
 Learned policy π and learned action-value function Q.
 """
-function nstepSarsa(mdp::MDPs.MDPConfig; n::Int, ϵ::Float64, α::Float64, γ::Float64, nepisodes::Int)::Tuple{Policies.Policy, Array{Float64, 3}}
+function nstepSarsa(mdp::MDPs.MDPConfig; n::Int, ϵ::Float64, α::Float64, γ::Float64, nepisodes::Int)::Tuple{Policies.Policy, Array{Float64, 3}, Vector{Float64}}
     @assert n > 0
     @assert 0 <= ϵ <= 1
     @assert 0 <= α <= 1
@@ -42,10 +43,16 @@ function nstepSarsa(mdp::MDPs.MDPConfig; n::Int, ϵ::Float64, α::Float64, γ::F
     # list of potential inital states, i.e. those that are not terminal
     initialStates = [Pair(x, y) for x in 1:dims[1] for y in 1:dims[2] if !MDPs.is_terminal(mdp, Pair(x, y))]
 
+    # errors for benchmarking
+    # keeping benchmarking functionality outside the learning algorithms would require to store Q for each episode which is in no way memory-feasible.
+    # Storing 800 KB for 100.000 episodes is already quite a lot for a single array.
+    Vstar, Qstar = MDPs.exactValueFunctions(mdp; γ)
+    errors = fill(0.0, nepisodes)
+
     # Julia array indices start from 1. To keep the algorithm close to the book, a +1 was added to all relevant array accesses.
     # The whitespace in e.g. S[t + 1 + 1] however has to be that way and can't be made more clear,
     # because in S[t+1 +1], Julia can't differentiate this from its matrix syntax leading to [t+1, +1]
-    for _ in 1:nepisodes
+    for episode in 1:nepisodes
         # list of encountered states
         S = Pair{Int}[]
 
@@ -121,9 +128,12 @@ function nstepSarsa(mdp::MDPs.MDPConfig; n::Int, ϵ::Float64, α::Float64, γ::F
             
             t += 1
         end
+
+        errors[episode] = Utils.meanSquaredError(Q, Qstar)
     end
 
-    return π, Q # todo: return deterministic π, not this ϵ-greedy one for learning
+    π = Policies.makeGreedyPolicy(Q)
+    return π, Q, errors
 end
 
 end
