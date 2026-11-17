@@ -2,9 +2,6 @@
     module MDPs
 
 Module that implements the interface for grid world Markov Decision Processes.
-
-# todo
-- the module name is bad
 """
 module MDPs
 using Random
@@ -296,33 +293,49 @@ function dimensions(mdp::MDPConfig)::Pair{Int}
 end
 
 """
-todo
+    exactValueFunctions(mdp, γ, tol)
+
+Computes V* and Q* for mdp with γ by doing a value iteration to get V* and then calculating Q* from V*.
 
 Used for error computations for benchmarks.
+
+# Parameters
+- `mdp::MDPConfig`: respective MDP
+- `γ::Float64`: discount factor
+- `tol::Float64`: tolerance for value iteration
+
+# Returns
+V* and Q*.
 """
-function exactValueFunctions(mdp::MDPs.MDPConfig; γ::Float64, tol = 1e-12)::Tuple{Array{Float64, 2}, Array{Float64, 3}}
-    dims = MDPs.dimensions(mdp)
+function exactValueFunctions(mdp::MDPConfig; γ::Float64, tol = 1e-12)::Tuple{Array{Float64, 2}, Array{Float64, 3}}
+    dims = dimensions(mdp)
     
     V = zeros(dims[1], dims[2])
-    Q = zeros(dims[1], dims[2], length(MDPs.ACTIONS))
+    Q = zeros(dims[1], dims[2], length(ACTIONS))
 
     # value iteration to get exact V
+    # based on Sutton, Barto chapter 4.4
     while true
+        # the book basically stores V in a temporal variable v
+        # then it updates V and then uses v to compute the difference
+        # instead one can also keep V and write the new values into the temporal variable Vnew
         Vnew = zeros(dims[1], dims[2])
 
         for x in 1:dims[1]
             for y in 1:dims[2]
                 s = Pair(x, y)
 
-                if MDPs.is_terminal(mdp, s)
+                if is_terminal(mdp, s)
                     continue
                 end
 
                 values = Float64[]
 
-                for a in MDPs.ACTIONS
+                # compute values to apply max operator over all actions
+                for a in ACTIONS
+                    # we only have one deterministic next state and reward
+                    # so the sum over states and rewards collapses into a single equation
                     sNext, r = transition(mdp, s, a)
-                    
                     v = r + γ * V[sNext.first, sNext.second]
                     
                     push!(values, v)
@@ -345,16 +358,16 @@ function exactValueFunctions(mdp::MDPs.MDPConfig; γ::Float64, tol = 1e-12)::Tup
         for y in 1:dims[2]
             s = Pair(x, y)
 
-            if MDPs.is_terminal(mdp, s)
+            if is_terminal(mdp, s)
                 continue
             end
 
-            for a in MDPs.ACTIONS
+            for a in ACTIONS
                 sNext, r = transition(mdp, s, a)
 
                 Q[x, y, a] = r
 
-                if !MDPs.is_terminal(mdp, sNext)
+                if !is_terminal(mdp, sNext)
                     Q[x, y, a] += γ * V[sNext.first, sNext.second]
                 end
             end

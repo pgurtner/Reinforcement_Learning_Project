@@ -1,20 +1,15 @@
 """
     module Benchmark
 
-The module containing everything around running benchmarks. Plotting is handled by the module Plots.
-
-# ideas
-- convergence
-- performance compared to other approaches
-- performance by itself??
-- accuracy
-
-3. implement benchmarking (something like figure 7.2, between algorithms for efficiency and by oneself for convergence, IMPORTANT: make sure not to mix up state-value and action-value functions, look again into how you can get the state-value function from the action-value function)
-
+The module containing everything around running benchmarks.
 """
 module Benchmark
 
+"""
+    module nstepSarsa
 
+Benchmarking for the nstepSarsa algorithm. Originally it was planned to also test the nstepQ(σ) algorithm, but as of now that was left out due to time reasons.
+"""
 module nstepSarsa
     using CairoMakie
     using ...Learning
@@ -22,6 +17,11 @@ module nstepSarsa
     using ...GridWorldPlotting
     using ...Policies
 
+    """
+        runBenchmark(mdp, n, ϵ, α, γ, nepisodes, repititions)
+    
+    Helper function for running n-step Sarsa with the given parameters for repetitions many times and averaging the recorded errors.
+    """
     function runBenchmark(mdp::MDPs.MDPConfig; n::Int, ϵ::Float64, α::Float64, γ::Float64, nepisodes::Int, repititions::Int)::Tuple{Vector{Float64}, Vector{Float64}}
         VerrorsAvg = zeros(nepisodes)
         QerrorsAvg = zeros(nepisodes)
@@ -39,6 +39,11 @@ module nstepSarsa
         return VerrorsAvg, QerrorsAvg
     end
 
+    """
+        basicConvergence()
+        
+    Benchmark basic convergence, i.e. just one run without any varying parameters.
+    """
     function basicConvergence()
         mdp = MDPs.makeSimpleGridworld(10, 10)
 
@@ -57,7 +62,7 @@ module nstepSarsa
             markersize=1,
         )
         
-        save("out/plots/Verrors.pdf", fig)
+        save("out/plots/Verrors.png", fig)
 
 
 
@@ -74,9 +79,14 @@ module nstepSarsa
             markersize=1,
         )
         
-        save("out/plots/Qerrors.pdf", fig)
+        save("out/plots/Qerrors.png", fig)
     end
 
+    """
+        compareN()
+
+    Benchmark n values from 1 to 10.
+    """
     function compareN()
         mdp = MDPs.makeSimpleGridworld(10, 10)
         Verrors = []
@@ -108,7 +118,7 @@ module nstepSarsa
         end
         
         axislegend(ax, position = :rt)
-        save("out/plots/compareN_Verrors.pdf", fig)
+        save("out/plots/compareN_Verrors.png", fig)
 
 
 
@@ -131,10 +141,15 @@ module nstepSarsa
         end
         
         axislegend(ax, position = :rt)
-        save("out/plots/compareN_Qerrors.pdf", fig)
+        save("out/plots/compareN_Qerrors.png", fig)
 
     end
 
+    """
+        compareEps()
+    
+    Benchmark ϵ values from 0.1 to 0.9.
+    """
     function compareEps()
         mdp = MDPs.makeSimpleGridworld(10, 10)
         Verrors = []
@@ -165,7 +180,7 @@ module nstepSarsa
         end
         
         axislegend(ax, position = :rt)
-        save("out/plots/compareEps_Verrors.pdf", fig)
+        save("out/plots/compareEps_Verrors.png", fig)
 
 
         fig = Figure(size = (800, 500))
@@ -187,11 +202,15 @@ module nstepSarsa
         end
         
         axislegend(ax, position = :rt)
-        save("out/plots/compareEps_Qerrors.pdf", fig)
+        save("out/plots/compareEps_Qerrors.png", fig)
 
     end
 
-    # says α = 0.1 has the highest potential
+    """
+        compareAlpha
+
+    Benchmark α values from 0.1 to 1.0.
+    """
     function compareAlpha()
         mdp = MDPs.makeSimpleGridworld(10, 10)
         Verrors = []
@@ -223,7 +242,7 @@ module nstepSarsa
         end
         
         axislegend(ax, position = :rt)
-        save("out/plots/compareAlpha_Verrors.pdf", fig)
+        save("out/plots/compareAlpha_Verrors.png", fig)
 
 
         fig = Figure(size = (800, 500))
@@ -245,7 +264,21 @@ module nstepSarsa
         end
         
         axislegend(ax, position = :rt)
-        save("out/plots/compareAlpha_Qerrors.pdf", fig)
+        save("out/plots/compareAlpha_Qerrors.png", fig)
+    end
+
+    function runAll()
+        println("running basic convergence benchmarks...")
+        basicConvergence()
+
+        println("running n value comparison benchmarks...")
+        compareN()
+
+        println("running ϵ value comparison benchmarks...")
+        compareEps()
+
+        println("running α value comparison benchmarks...")
+        compareAlpha()
     end
 end
 

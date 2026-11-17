@@ -225,9 +225,11 @@ function makeGreedyPolicy(Q::Array{Float64, 3})::Policy
 end
 
 """
+    stateValueFunctionFromQ(π, Q)
+
+Creates state-value function based on π and Q.
 
 Used for benchmarking.
-todo
 """
 function stateValueFunctionFromQ(π::Policies.Policy, Q::Array{Float64, 3})::Array{Float64, 2}
     # todo: assert matching dimensions
@@ -247,16 +249,4 @@ function stateValueFunctionFromQ(π::Policies.Policy, Q::Array{Float64, 3})::Arr
 
     return v
 end
-
-# """
-# todo
-# Compute exact state-value function for mdp for error computations for benchmarks.
-# """
-# function exactStateValueFunction(Q::Array{Float64, 3})::Array{Float64, 2}
-#     # todo: shouldn't the exact Q be computed here nistead of handed as a parameter?
-#     π = Policies.makeGreedyPolicy(Q)
-#     V = stateValueFunctionFromQ(π, Q)
-#     return V
-# end
-
 end

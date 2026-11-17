@@ -19,7 +19,9 @@ function stdbasis(l::Int, i::Int)
 end
 
 """
-todo
+    meanSquaredError(A, B)
+
+Computes 1/n * sum_i((A[i] - B[i])^2) for arrays A and B of same size.
 """
 function meanSquaredError(A::Array{Float64, N}, B::Array{Float64, N}) where {N}
     @assert size(A) == size(B)
@@ -30,7 +32,11 @@ function meanSquaredError(A::Array{Float64, N}, B::Array{Float64, N}) where {N}
 end
 
 """
-todo
+    rms(A, B)
+
+Computes root mean squared error, i.e. sqrt.(meanSquaredError(A, B)) for arrays A and B of same size.
+
+Currently unused.
 """
 function rms(A::Array{Float64, N}, B::Array{Float64, N}) where {N}
     return sqrt.(meanSquaredError(A, B))
