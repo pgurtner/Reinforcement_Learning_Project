@@ -1,3 +1,5 @@
+Note, some of the plots are different from the report because I did some extra tests while trying to understand the benchmarks that were included in the report.
+
 # task
  * choose a method from chapter 7
  * describe it
@@ -18,15 +20,13 @@ Multiple iterations from basic to interesting:
 
 # todo
 1. just implement gridworld example while keeping interfaces flexible
-2. look for good 2-agents problem
-    1. reread chapter 3 and get game inspiration
-    2. find good 2-player problem
-    3. adjust interfaces to support also this
+    4. implement nstepQ(\sigma)
+    12. generate docs for code
 * roadmap
 * timeplan including report (5 days including today/thursday and excluding tuesday)
 * find better names for modules
 
-# code concept
+# code concept (very outdated)
  * Algorithm
  * MDP
  * example / problem

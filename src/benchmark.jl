@@ -47,7 +47,7 @@ module nstepSarsa
     function basicConvergence()
         mdp = MDPs.makeSimpleGridworld(10, 10)
 
-        Verror, Qerror = runBenchmark(mdp, n=1, ϵ=0.4, α=0.1, γ=0.5, nepisodes=10000, repititions=5)
+        Verror, Qerror = runBenchmark(mdp, n=1, ϵ=0.1, α=0.1, γ=0.5, nepisodes=50000, repititions=5)
 
         fig = Figure(size = (800, 500))
         ax = Axis(fig[1, 1],
@@ -232,7 +232,7 @@ module nstepSarsa
         )
 
         # colors = Makie.resample_cmap(:roma10, 10)
-        for i in 1:3
+        for i in 1:A
             scatterlines!(ax, 1:length(Verrors[i]), Verrors[i],
                 linewidth=2,
                 markersize=1,

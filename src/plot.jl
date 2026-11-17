@@ -106,6 +106,7 @@ function drawQ(mdp::MDPs.MDPConfig, Q::Array{Float64, 3})
         end
     end
 
+    #save("out/images/Q.png", fig)
     display(fig)
 end
 
@@ -162,7 +163,7 @@ function drawOptimalActions(mdp::MDPs.MDPConfig, Q::Array{Float64, 3})
         end
     end
 
-    display(fig)
+    save("out/images/optimalActions.png", fig)
 end
 
 """
@@ -194,7 +195,7 @@ function drawStateValueFunction(mdp::MDPs.MDPConfig, V::Array{Float64, 2})
         end
     end
 
-    display(fig)
+    save("out/images/V.png", fig)
 end
 
 end
