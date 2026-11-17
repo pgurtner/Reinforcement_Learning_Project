@@ -25,7 +25,7 @@ n-step Sarsa implementation for grid world MDPs. Overall code structure and vari
 # Returns
 Learned policy π and learned action-value function Q.
 """
-function nstepSarsa(mdp::MDPs.MDPConfig; n::Int, ϵ::Float64, α::Float64, γ::Float64, nepisodes::Int)::Tuple{Policies.Policy, Array{Float64, 3}, Vector{Float64}}
+function nstepSarsa(mdp::MDPs.MDPConfig; n::Int, ϵ::Float64, α::Float64, γ::Float64, nepisodes::Int)::Tuple{Policies.Policy, Array{Float64, 3}, Vector{Float64}, Vector{Float64}}
     @assert n > 0
     @assert 0 <= ϵ <= 1
     @assert 0 <= α <= 1
@@ -47,7 +47,8 @@ function nstepSarsa(mdp::MDPs.MDPConfig; n::Int, ϵ::Float64, α::Float64, γ::F
     # keeping benchmarking functionality outside the learning algorithms would require to store Q for each episode which is in no way memory-feasible.
     # Storing 800 KB for 100.000 episodes is already quite a lot for a single array.
     Vstar, Qstar = MDPs.exactValueFunctions(mdp; γ)
-    errors = fill(0.0, nepisodes)
+    Verrors = fill(0.0, nepisodes)
+    Qerrors = fill(0.0, nepisodes)
 
     # Julia array indices start from 1. To keep the algorithm close to the book, a +1 was added to all relevant array accesses.
     # The whitespace in e.g. S[t + 1 + 1] however has to be that way and can't be made more clear,
@@ -129,11 +130,14 @@ function nstepSarsa(mdp::MDPs.MDPConfig; n::Int, ϵ::Float64, α::Float64, γ::F
             t += 1
         end
 
-        errors[episode] = Utils.meanSquaredError(Q, Qstar)
+        greedyΠ = Policies.makeGreedyPolicy(Q)
+        V = Policies.stateValueFunctionFromQ(greedyΠ, Q)
+        Verrors[episode] = Utils.meanSquaredError(V, Vstar)
+        Qerrors[episode] = Utils.meanSquaredError(Q, Qstar)
     end
 
     π = Policies.makeGreedyPolicy(Q)
-    return π, Q, errors
+    return π, Q, Verrors, Qerrors
 end
 
 end
